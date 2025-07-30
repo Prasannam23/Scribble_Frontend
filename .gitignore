@@ -1,0 +1,40 @@
+# Node modules
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Cache folders
+.cache/
+.pnp/
+.pnp.js
+
+# Misc
+coverage/
+*.tgz
+
