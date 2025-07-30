@@ -8,7 +8,7 @@ const DrawingGame = () => {
   // Socket connection
   const [socket, setSocket] = useState(null);
 
-  // App state
+  
   const [currentScreen, setCurrentScreen] = useState('home');
   const [playerName, setPlayerName] = useState('');
   const [roomId, setRoomId] = useState('');
@@ -94,7 +94,6 @@ const DrawingGame = () => {
     };
   }, []);
 
-  // Timer countdown
   useEffect(() => {
     if (timeLeft > 0 && (gameState === 'drawing' || gameState === 'voting')) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -176,7 +175,7 @@ const DrawingGame = () => {
     }
   };
 
-  // Game actions
+  
   const createRoom = () => {
     if (!playerName.trim()) {
       setError('Please enter your name');
@@ -249,19 +248,18 @@ const DrawingGame = () => {
     setTimeLeft(0);
   };
 
-  // Screens -----------------------------------------------------------------
-
-  // HOME
+// this is the ui part 
+ 
   const renderHomeScreen = () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <Palette className="mx-auto h-16 w-16 text-black mb-4" />
-          <h1 className="text-3xl font-bold text-black mb-2">Drawing Duel</h1>
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50">
+      <div className="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl">
+        <div className="mb-8 text-center">
+          <Palette className="w-16 h-16 mx-auto mb-4 text-black" />
+          <h1 className="mb-2 text-3xl font-bold text-black">Drawing Duel</h1>
           <p className="text-gray-600">Compete in epic drawing battles!</p>
         </div>
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="px-4 py-3 mb-4 text-red-700 border border-red-200 rounded bg-red-50">
             {error}
           </div>
         )}
@@ -271,13 +269,13 @@ const DrawingGame = () => {
             placeholder="Enter your name"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:border-transparent outline-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
           />
           <button
             onClick={createRoom}
-            className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+            className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition duration-200 bg-black rounded-lg hover:bg-gray-800"
           >
-            <Play className="h-5 w-5" />
+            <Play className="w-5 h-5" />
             Create Room
           </button>
           <div className="relative">
@@ -285,7 +283,7 @@ const DrawingGame = () => {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or join existing room</span>
+              <span className="px-2 text-gray-500 bg-white">or join existing room</span>
             </div>
           </div>
           <input
@@ -293,21 +291,21 @@ const DrawingGame = () => {
             placeholder="Room ID"
             value={roomId}
             onChange={(e) => setRoomId(e.target.value.toUpperCase())}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:border-transparent outline-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
           />
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={joinRoomAsPlayer}
-              className="bg-gray-900 hover:bg-black text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+              className="flex items-center justify-center gap-2 px-4 py-3 font-semibold text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-black"
             >
-              <Users className="h-4 w-4" />
+              <Users className="w-4 h-4" />
               Play
             </button>
             <button
               onClick={joinRoomAsVoter}
-              className="bg-gray-500 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+              className="flex items-center justify-center gap-2 px-4 py-3 font-semibold text-white transition duration-200 bg-gray-500 rounded-lg hover:bg-gray-700"
             >
-              <Vote className="h-4 w-4" />
+              <Vote className="w-4 h-4" />
               Vote
             </button>
           </div>
@@ -316,33 +314,33 @@ const DrawingGame = () => {
     </div>
   );
 
-  // LOBBY
+  // LOBBY created by players and viewers
   const renderLobbyScreen = () => (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen p-4 bg-gray-100">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6">
-          <div className="flex justify-between items-center mb-6">
+        <div className="p-6 mb-6 bg-white shadow-2xl rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-black">Room {roomId}</h2>
               <p className="text-gray-600">Waiting for players...</p>
             </div>
             <button
               onClick={shareRoom}
-              className="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 transition duration-200"
+              className="flex items-center gap-2 px-4 py-2 text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-black"
             >
-              <Share2 className="h-4 w-4" />
+              <Share2 className="w-4 h-4" />
               Share
             </button>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <h3 className="font-semibold text-black mb-3 flex items-center gap-2">
-                <Users className="h-5 w-5" />
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <h3 className="flex items-center gap-2 mb-3 font-semibold text-black">
+                <Users className="w-5 h-5" />
                 Players ({room?.playerCount || 0}/2)
               </h3>
               <div className="space-y-2">
                 {room && Object.entries(room.players || {}).map(([id, player]) => (
-                  <div key={id} className="flex items-center justify-between bg-white rounded-lg p-3">
+                  <div key={id} className="flex items-center justify-between p-3 bg-white rounded-lg">
                     <span className="font-medium text-gray-900">{player.name}</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${player.ready ?
                       'bg-gray-800 text-white' :
@@ -353,14 +351,14 @@ const DrawingGame = () => {
                 ))}
               </div>
             </div>
-            <div className="bg-gray-100 rounded-xl p-4">
-              <h3 className="font-semibold text-black mb-3 flex items-center gap-2">
-                <Vote className="h-5 w-5" />
+            <div className="p-4 bg-gray-100 rounded-xl">
+              <h3 className="flex items-center gap-2 mb-3 font-semibold text-black">
+                <Vote className="w-5 h-5" />
                 Voters ({room?.voterCount || 0})
               </h3>
               <div className="space-y-2">
                 {room && Object.entries(room.voters || {}).map(([id, voter]) => (
-                  <div key={id} className="flex items-center bg-white rounded-lg p-3">
+                  <div key={id} className="flex items-center p-3 bg-white rounded-lg">
                     <span className="font-medium text-gray-900">{voter.name}</span>
                   </div>
                 ))}
@@ -379,8 +377,8 @@ const DrawingGame = () => {
             </div>
           )}
           {userRole === 'voter' && (
-            <div className="mt-6 bg-gray-100 rounded-xl p-4">
-              <p className="text-black text-center">
+            <div className="p-4 mt-6 bg-gray-100 rounded-xl">
+              <p className="text-center text-black">
                 You're ready to vote! Wait for the game to start.
               </p>
             </div>
@@ -390,36 +388,36 @@ const DrawingGame = () => {
     </div>
   );
 
-  // GAME
+ // this also contains the canvas needed for this game 
   const renderGameScreen = () => (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
-          <div className="flex justify-between items-center">
+    <div className="min-h-screen p-4 bg-gray-100">
+      <div className="mx-auto max-w-7xl">
+        <div className="p-4 mb-4 bg-white shadow-lg rounded-xl">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-black">Draw: {currentPrompt}</h2>
               <p className="text-gray-600">Show your artistic skills!</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-black">
-                <Clock className="h-5 w-5" />
-                <span className="font-bold text-lg">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+                <Clock className="w-5 h-5" />
+                <span className="text-lg font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
               </div>
             </div>
           </div>
         </div>
         {userRole === 'player' ? (
-          <div className="grid lg:grid-cols-2 gap-4">
-            {/* Your Canvas */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="flex justify-between items-center mb-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            
+            <div className="p-4 bg-white shadow-lg rounded-xl">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-black">Your Drawing</h3>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={currentColor}
                     onChange={(e) => setCurrentColor(e.target.value)}
-                    className="w-8 h-8 rounded border-0"
+                    className="w-8 h-8 border-0 rounded"
                   />
                   <input
                     type="range"
@@ -431,7 +429,7 @@ const DrawingGame = () => {
                   />
                   <button
                     onClick={clearCanvas}
-                    className="bg-gray-600 hover:bg-black text-white px-3 py-1 rounded text-sm"
+                    className="px-3 py-1 text-sm text-white bg-gray-600 rounded hover:bg-black"
                   >
                     Clear
                   </button>
@@ -445,25 +443,25 @@ const DrawingGame = () => {
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
                 onMouseLeave={stopDrawing}
-                className="border-2 border-gray-300 rounded-lg cursor-crosshair w-full"
+                className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair"
                 style={{ touchAction: 'none' }}
               />
             </div>
             {/* Opponent Canvas */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <h3 className="font-semibold text-black mb-4">Opponent's Drawing</h3>
+            <div className="p-4 bg-white shadow-lg rounded-xl">
+              <h3 className="mb-4 font-semibold text-black">Opponent's Drawing</h3>
               <canvas
                 ref={opponentCanvasRef}
                 width={400}
                 height={300}
-                className="border-2 border-gray-300 rounded-lg w-full"
+                className="w-full border-2 border-gray-300 rounded-lg"
               />
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <Palette className="mx-auto h-16 w-16 text-black mb-4" />
-            <h3 className="text-xl font-semibold text-black mb-2">Players are drawing...</h3>
+          <div className="p-8 text-center bg-white shadow-lg rounded-xl">
+            <Palette className="w-16 h-16 mx-auto mb-4 text-black" />
+            <h3 className="mb-2 text-xl font-semibold text-black">Players are drawing...</h3>
             <p className="text-gray-600">Get ready to vote for the best drawing!</p>
           </div>
         )}
@@ -473,26 +471,26 @@ const DrawingGame = () => {
 
   // VOTING
   const renderVotingScreen = () => (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen p-4 bg-gray-100">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-black mb-2">Time to Vote!</h2>
-            <p className="text-gray-600 mb-4">Prompt was: "{currentPrompt}"</p>
+        <div className="p-6 mb-6 bg-white shadow-2xl rounded-2xl">
+          <div className="mb-6 text-center">
+            <h2 className="mb-2 text-3xl font-bold text-black">Time to Vote!</h2>
+            <p className="mb-4 text-gray-600">Prompt was: "{currentPrompt}"</p>
             <div className="flex items-center justify-center gap-2 text-black">
-              <Clock className="h-5 w-5" />
-              <span className="font-bold text-xl">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+              <Clock className="w-5 h-5" />
+              <span className="text-xl font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
             </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
             {playerDrawings.map((player) => (
-              <div key={player.playerId} className="bg-gray-50 rounded-xl p-6">
-                <h3 className="font-semibold text-black mb-4 text-center">{player.playerName}</h3>
-                <div className="bg-white rounded-lg p-4 mb-4">
+              <div key={player.playerId} className="p-6 bg-gray-50 rounded-xl">
+                <h3 className="mb-4 font-semibold text-center text-black">{player.playerName}</h3>
+                <div className="p-4 mb-4 bg-white rounded-lg">
                   <canvas
                     width={400}
                     height={300}
-                    className="border border-gray-300 rounded w-full"
+                    className="w-full border border-gray-300 rounded"
                     ref={(canvas) => {
                       if (canvas && player.drawing) {
                         const ctx = canvas.getContext('2d');
@@ -520,13 +518,13 @@ const DrawingGame = () => {
                 {userRole === 'voter' && !hasVoted && (
                   <button
                     onClick={() => castVote(player.playerId)}
-                    className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+                    className="w-full px-4 py-3 font-semibold text-white transition duration-200 bg-black rounded-lg hover:bg-gray-800"
                   >
                     Vote for {player.playerName}
                   </button>
                 )}
                 {hasVoted && (
-                  <div className="text-center text-gray-700 font-semibold">
+                  <div className="font-semibold text-center text-gray-700">
                     Vote cast! ✓
                   </div>
                 )}
@@ -534,7 +532,7 @@ const DrawingGame = () => {
             ))}
           </div>
           {userRole === 'player' && (
-            <div className="mt-6 bg-gray-100 rounded-xl p-4 text-center">
+            <div className="p-4 mt-6 text-center bg-gray-100 rounded-xl">
               <p className="text-black">
                 Voters are deciding the winner. Good luck! 
               </p>
@@ -547,12 +545,12 @@ const DrawingGame = () => {
 
   // RESULTS
   const renderResultsScreen = () => (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen p-4 bg-gray-100">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <Trophy className="mx-auto h-16 w-16 text-gray-700 mb-4" />
-            <h2 className="text-3xl font-bold text-black mb-2">Game Results</h2>
+        <div className="p-8 bg-white shadow-2xl rounded-2xl">
+          <div className="mb-8 text-center">
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-700" />
+            <h2 className="mb-2 text-3xl font-bold text-black">Game Results</h2>
             <p className="text-gray-600">Prompt: "{gameResults?.prompt}"</p>
           </div>
           {gameResults && (
@@ -563,20 +561,20 @@ const DrawingGame = () => {
                 }`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      {index === 0 && <Trophy className="h-6 w-6 text-gray-900" />}
+                      {index === 0 && <Trophy className="w-6 h-6 text-gray-900" />}
                       <h3 className="text-xl font-semibold text-black">{result.playerName}</h3>
-                      {index === 0 && <span className="bg-gray-100 text-black px-3 py-1 rounded-full text-sm font-semibold">Winner!</span>}
+                      {index === 0 && <span className="px-3 py-1 text-sm font-semibold text-black bg-gray-100 rounded-full">Winner!</span>}
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-black">{result.votes}</div>
                       <div className="text-sm text-gray-600">votes</div>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
+                  <div className="p-4 bg-white rounded-lg">
                     <canvas
                       width={400}
                       height={300}
-                      className="border border-gray-300 rounded w-full"
+                      className="w-full border border-gray-300 rounded"
                       ref={(canvas) => {
                         if (canvas && result.drawing) {
                           const ctx = canvas.getContext('2d');
@@ -608,7 +606,7 @@ const DrawingGame = () => {
           <div className="mt-8 text-center">
             <button
               onClick={startNewGame}
-              className="bg-black hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
+              className="px-6 py-3 font-semibold text-white transition duration-200 bg-black rounded-lg hover:bg-gray-800"
             >
               Play Again
             </button>
@@ -618,7 +616,7 @@ const DrawingGame = () => {
     </div>
   );
 
-  // Main render
+ 
   return (
     <div className="font-sans">
       {currentScreen === 'home' && renderHomeScreen()}
