@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { Users, Clock, Trophy, Palette, Vote, Share2, Play, UserPlus } from 'lucide-react';
 
-const SOCKET_URL = 'https://sribble-backend.onrender.com';
+const SOCKET_URL = 'https://sribble-backend-1.onrender.com';
 
 const DrawingGame = () => {
   // Socket connection
