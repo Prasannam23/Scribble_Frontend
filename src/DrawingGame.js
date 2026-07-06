@@ -5,7 +5,7 @@ import { Users, Clock, Trophy, Palette, Vote, Share2, Play, Maximize2 } from 'lu
 const SOCKET_URL = 'https://sribble-backend-1.onrender.com';
 
 const DrawingGame = () => {
-
+  // Socket connection
   const [socket, setSocket] = useState(null);
 
   
@@ -23,19 +23,42 @@ const DrawingGame = () => {
   const [playerDrawings, setPlayerDrawings] = useState([]);
   const [hasVoted, setHasVoted] = useState(false);
 
-  
+  // Drawing state
   const canvasRef = useRef(null);
   const opponentCanvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentColor, setCurrentColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
   const [drawingData, setDrawingData] = useState([]);
-  const [opponentDrawingData, setOpponentDrawingData] = useState([]);
+  const [, setOpponentDrawingData] = useState([]);
 
-
+  // Picture-in-picture layout state: when true, the opponent's canvas is the
+  // large "main" view and your own canvas shrinks to the small corner tile
+  // (mirrors how video call apps let you swap who's front-and-center).
   const [pipExpanded, setPipExpanded] = useState(false);
 
-  
+  const drawOnOpponentCanvas = useCallback((data) => {
+    if (!opponentCanvasRef.current || !data.length) return;
+    const canvas = opponentCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    data.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+        ctx.strokeStyle = point.color;
+        ctx.lineWidth = point.size;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+      }
+    });
+  }, []);
+
+  // Socket setup
   useEffect(() => {
     const newSocket = io(SOCKET_URL);
     setSocket(newSocket);
@@ -96,7 +119,7 @@ const DrawingGame = () => {
     return () => {
       newSocket.close();
     };
-  }, );
+  }, [drawOnOpponentCanvas]);
 
   useEffect(() => {
     if (timeLeft > 0 && (gameState === 'drawing' || gameState === 'voting')) {
@@ -146,27 +169,6 @@ const DrawingGame = () => {
       ctx.beginPath();
     }
   }, [isDrawing]);
-
-  const drawOnOpponentCanvas = useCallback((data) => {
-    if (!opponentCanvasRef.current || !data.length) return;
-    const canvas = opponentCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    data.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-        ctx.strokeStyle = point.color;
-        ctx.lineWidth = point.size;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(point.x, point.y);
-      }
-    });
-  }, []);
 
   const clearCanvas = () => {
     if (gameState !== 'drawing' || userRole !== 'player') return;
@@ -396,7 +398,9 @@ const DrawingGame = () => {
   // this also contains the canvas needed for this game
   // Layout: a video-call style "main + picture-in-picture" view.
   // Whichever canvas is NOT active (self by default) sits full-size as the
-  
+  // main stage; the other floats as a small clickable corner tile. Clicking
+  // the tile swaps which one is main/pip, exactly like tapping a video-call
+  // participant to bring them to the front.
   const renderGameScreen = () => {
     const pipTileClasses =
       "absolute bottom-3 right-3 md:bottom-4 md:right-4 z-20 overflow-hidden rounded-lg border-2 border-white shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-105 group";
