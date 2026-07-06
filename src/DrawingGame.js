@@ -1,8 +1,52 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Users, Clock, Trophy, Palette, Vote, Share2, Play, Maximize2 } from 'lucide-react';
+import { Users, Clock, Trophy, Palette, Vote, Share2, PenTool, ArrowRight, Maximize2 } from 'lucide-react';
 
 const SOCKET_URL = 'https://sribble-backend-1.onrender.com';
+
+// Signature visual: a torn-sketchpad-edge divider between the brand panel
+// and the form panel on the home screen, built as a zigzag clip-path.
+const zigzagClipPath = (teeth = 16, amplitude = 4) => {
+  const points = ['0% 0%'];
+  for (let i = 0; i <= teeth; i++) {
+    const y = (i / teeth) * 100;
+    const x = i % 2 === 0 ? 100 : 100 - amplitude;
+    points.push(`${x}% ${y}%`);
+  }
+  points.push('0% 100%');
+  return `polygon(${points.join(',')})`;
+};
+const HOME_PANEL_CLIP = zigzagClipPath(18, 4.5);
+
+// Shared design tokens — paper/ink/marker palette used across every screen.
+const COLORS = {
+  paper: '#FAF7F0',
+  paperDim: '#F1ECE1',
+  ink: '#1A1A1A',
+  coral: '#FF5A36',
+  blue: '#3A6EA5',
+  yellow: '#FFD23F',
+  gray: '#6B6B6B',
+  border: '#E4DFD3',
+};
+const FONT_DISPLAY = "'Permanent Marker', cursive";
+const FONT_BODY = "'Space Grotesk', sans-serif";
+const FONT_MONO = "'IBM Plex Mono', monospace";
+const FONT_IMPORT_URL =
+  "@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');";
+
+const SHADOW = `5px 5px 0px ${'#1A1A1A'}`;
+const SHADOW_SM = `3px 3px 0px ${'#1A1A1A'}`;
+
+
+const BrandMark = () => (
+  <div className="flex items-center gap-2 mb-6">
+    <PenTool className="w-5 h-5" style={{ color: COLORS.coral }} />
+    <span className="text-xl" style={{ fontFamily: FONT_DISPLAY, color: COLORS.ink }}>
+      Drawing Duel
+    </span>
+  </div>
+);
 
 const DrawingGame = () => {
   // Socket connection
@@ -33,8 +77,7 @@ const DrawingGame = () => {
   const [, setOpponentDrawingData] = useState([]);
 
   // Picture-in-picture layout state: when true, the opponent's canvas is the
-  // large "main" view and your own canvas shrinks to the small corner tile
-  // (mirrors how video call apps let you swap who's front-and-center).
+ 
   const [pipExpanded, setPipExpanded] = useState(false);
 
   const drawOnOpponentCanvas = useCallback((data) => {
@@ -258,63 +301,128 @@ const DrawingGame = () => {
 // this is the ui part 
  
   const renderHomeScreen = () => (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl">
-        <div className="mb-8 text-center">
-          <Palette className="w-16 h-16 mx-auto mb-4 text-black" />
-          <h1 className="mb-2 text-3xl font-bold text-black">Drawing Duel</h1>
-          <p className="text-gray-600">Compete in epic drawing battles!</p>
+    <div className="flex flex-col min-h-screen md:flex-row" style={{ backgroundColor: COLORS.paper }}>
+
+      {/* Brand panel — desktop only; torn-sketchpad edge via clip-path */}
+      <div
+        className="relative hidden overflow-hidden md:flex md:w-[42%] flex-col justify-between px-10 py-12"
+        style={{ backgroundColor: '#1A1A1A', clipPath: HOME_PANEL_CLIP }}
+      >
+        <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 400 600" preserveAspectRatio="none">
+          <path d="M20 40 Q 100 10 180 60 T 340 50" stroke="#FAF7F0" strokeWidth="2" fill="none" />
+          <path d="M10 200 Q 120 160 220 220 T 380 210" stroke="#FAF7F0" strokeWidth="2" fill="none" />
+          <path d="M30 380 Q 140 340 240 400 T 370 390" stroke="#FAF7F0" strokeWidth="2" fill="none" />
+          <path d="M15 520 Q 110 480 200 530 T 360 515" stroke="#FAF7F0" strokeWidth="2" fill="none" />
+        </svg>
+
+        <div className="relative z-10 flex items-center gap-2" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+          <PenTool className="w-4 h-4" style={{ color: '#FF5A36' }} />
+          <span className="text-xs uppercase" style={{ color: '#FF5A36', letterSpacing: '0.3em' }}>
+            Sketch battle
+          </span>
         </div>
-        {error && (
-          <div className="px-4 py-3 mb-4 text-red-700 border border-red-200 rounded bg-red-50">
-            {error}
+
+        <div className="relative z-10">
+          <h1
+            className="text-6xl leading-none"
+            style={{ fontFamily: "'Permanent Marker', cursive", color: '#FAF7F0' }}
+          >
+            Drawing
+            <br />
+            <span style={{ color: '#FF5A36' }}>Duel</span>
+          </h1>
+          <p className="max-w-xs mt-6 text-sm text-gray-400" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            Two artists, one prompt, sixty seconds. The crowd decides who wins.
+          </p>
+        </div>
+
+        <div className="relative z-10 text-xs text-gray-500" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+          room codes are 6 characters · works on any device
+        </div>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex items-start justify-center flex-1 md:justify-start">
+        <div
+          className="w-full max-w-md px-6 py-14 md:px-16 md:py-20"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          {/* Mobile-only brand line */}
+          <div className="flex items-center gap-2 mb-10 md:hidden">
+            <PenTool className="w-5 h-5" style={{ color: '#FF5A36' }} />
+            <span className="text-2xl" style={{ fontFamily: "'Permanent Marker', cursive", color: '#1A1A1A' }}>
+              Drawing Duel
+            </span>
           </div>
-        )}
-        <div className="space-y-4">
+
+          {error && (
+            <div
+              className="px-4 py-3 mb-6 text-sm font-medium border-2"
+              style={{ backgroundColor: '#FFD23F', borderColor: '#1A1A1A', color: '#1A1A1A', transform: 'rotate(-1deg)' }}
+            >
+              {error}
+            </div>
+          )}
+
+          <label className="block mb-2 text-xs tracking-widest text-gray-500 uppercase">Your name</label>
           <input
             type="text"
-            placeholder="Enter your name"
+            placeholder="e.g. Sam"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
+            className="w-full py-2 text-lg placeholder-gray-300 transition-colors bg-transparent border-b-2 border-gray-300 outline-none"
+            style={{ color: '#1A1A1A' }}
+            onFocus={(e) => (e.target.style.borderColor = '#1A1A1A')}
+            onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
           />
-          <button
-            onClick={createRoom}
-            className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold text-white transition duration-200 bg-black rounded-lg hover:bg-gray-800"
-          >
-            <Play className="w-5 h-5" />
-            Create Room
-          </button>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 text-gray-500 bg-white">or join existing room</span>
-            </div>
+
+          <div className="mt-10">
+            <p className="mb-3 text-xs tracking-widest text-gray-500 uppercase">New game</p>
+            <button
+              onClick={createRoom}
+              className="flex items-center justify-between w-full gap-3 px-5 py-4 text-left transition-transform hover:-translate-y-0.5"
+              style={{ backgroundColor: '#1A1A1A', color: '#FAF7F0', boxShadow: SHADOW }}
+            >
+              <span className="font-semibold">Start a new room</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
           </div>
-          <input
-            type="text"
-            placeholder="Room ID"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value.toUpperCase())}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={joinRoomAsPlayer}
-              className="flex items-center justify-center gap-2 px-4 py-3 font-semibold text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-black"
-            >
-              <Users className="w-4 h-4" />
-              Play
-            </button>
-            <button
-              onClick={joinRoomAsVoter}
-              className="flex items-center justify-center gap-2 px-4 py-3 font-semibold text-white transition duration-200 bg-gray-500 rounded-lg hover:bg-gray-700"
-            >
-              <Vote className="w-4 h-4" />
-              Vote
-            </button>
+
+          <div className="mt-10">
+            <p className="mb-3 text-xs tracking-widest text-gray-500 uppercase">Have a code?</p>
+            <input
+              type="text"
+              placeholder="ROOM CODE"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+              maxLength={10}
+              className="w-full px-4 py-3 text-lg text-center placeholder-gray-300 uppercase transition-colors bg-transparent border-2 border-gray-300 border-dashed outline-none"
+              style={{ color: '#1A1A1A', letterSpacing: '0.3em', fontFamily: "'IBM Plex Mono', monospace" }}
+              onFocus={(e) => (e.target.style.borderColor = '#FF5A36')}
+              onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
+            />
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <button
+                onClick={joinRoomAsPlayer}
+                className="flex items-center justify-center gap-2 px-4 py-3 font-semibold transition-colors border-2"
+                style={{ borderColor: '#1A1A1A', color: '#1A1A1A' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1A1A1A'; e.currentTarget.style.color = '#FAF7F0'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#1A1A1A'; }}
+              >
+                <Users className="w-4 h-4" />
+                Draw
+              </button>
+              <button
+                onClick={joinRoomAsVoter}
+                className="flex items-center justify-center gap-2 px-4 py-3 font-semibold transition-colors border-2"
+                style={{ borderColor: '#3A6EA5', color: '#3A6EA5' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#3A6EA5'; e.currentTarget.style.color = '#FAF7F0'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#3A6EA5'; }}
+              >
+                <Vote className="w-4 h-4" />
+                Vote
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -323,119 +431,155 @@ const DrawingGame = () => {
 
   // LOBBY created by players and viewers
   const renderLobbyScreen = () => (
-    <div className="min-h-screen p-4 bg-gray-100">
-      <div className="max-w-4xl mx-auto">
-        <div className="p-6 mb-6 bg-white shadow-2xl rounded-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-black">Room {roomId}</h2>
-              <p className="text-gray-600">Waiting for players...</p>
-            </div>
-            <button
-              onClick={shareRoom}
-              className="flex items-center gap-2 px-4 py-2 text-white transition duration-200 bg-gray-900 rounded-lg hover:bg-black"
+    <div className="min-h-screen px-4 py-10 md:px-10" style={{ backgroundColor: COLORS.paper, fontFamily: FONT_BODY }}>
+      <div className="mx-auto max-w-4xl">
+        <BrandMark />
+        {/* Room code ticket */}
+        <div
+          className="flex flex-col items-start justify-between gap-4 p-6 mb-6 border-2 md:flex-row md:items-center"
+          style={{ borderColor: COLORS.ink, backgroundColor: '#fff', boxShadow: SHADOW }}
+        >
+          <div>
+            <p className="text-xs tracking-widest uppercase" style={{ color: COLORS.gray }}>Room code</p>
+            <h2
+              className="text-4xl"
+              style={{ fontFamily: FONT_MONO, letterSpacing: '0.2em', color: COLORS.ink }}
             >
-              <Share2 className="w-4 h-4" />
-              Share
+              {roomId}
+            </h2>
+            <p className="mt-1 text-sm" style={{ color: COLORS.gray }}>Waiting for everyone to settle in...</p>
+          </div>
+          <button
+            onClick={shareRoom}
+            className="flex items-center gap-2 px-5 py-3 font-semibold transition-transform hover:-translate-y-0.5"
+            style={{ backgroundColor: COLORS.coral, color: COLORS.ink, boxShadow: SHADOW_SM }}
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </button>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="p-5 bg-white border-l-4" style={{ borderColor: COLORS.coral, boxShadow: SHADOW_SM }}>
+            <h3 className="flex items-center gap-2 mb-4 font-semibold" style={{ color: COLORS.ink }}>
+              <Users className="w-5 h-5" style={{ color: COLORS.coral }} />
+              Players ({room?.playerCount || 0}/2)
+            </h3>
+            <div className="space-y-2">
+              {room && Object.entries(room.players || {}).map(([id, player]) => (
+                <div
+                  key={id}
+                  className="flex items-center justify-between p-3 border"
+                  style={{ borderColor: COLORS.border, backgroundColor: COLORS.paperDim }}
+                >
+                  <span className="font-medium" style={{ color: COLORS.ink }}>{player.name}</span>
+                  <span
+                    className="px-2 py-1 text-xs font-semibold uppercase tracking-wide"
+                    style={player.ready
+                      ? { backgroundColor: COLORS.ink, color: COLORS.paper }
+                      : { backgroundColor: '#fff', color: COLORS.gray, border: `1px solid ${COLORS.border}` }}
+                  >
+                    {player.ready ? 'Ready' : 'Waiting'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-5 bg-white border-l-4" style={{ borderColor: COLORS.blue, boxShadow: SHADOW_SM }}>
+            <h3 className="flex items-center gap-2 mb-4 font-semibold" style={{ color: COLORS.ink }}>
+              <Vote className="w-5 h-5" style={{ color: COLORS.blue }} />
+              Voters ({room?.voterCount || 0})
+            </h3>
+            <div className="space-y-2">
+              {room && Object.entries(room.voters || {}).map(([id, voter]) => (
+                <div
+                  key={id}
+                  className="flex items-center p-3 border"
+                  style={{ borderColor: COLORS.border, backgroundColor: COLORS.paperDim }}
+                >
+                  <span className="font-medium" style={{ color: COLORS.ink }}>{voter.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {userRole === 'player' && !isReady && (
+          <div className="mt-6">
+            <button
+              onClick={markReady}
+              disabled={room?.playerCount < 2}
+              className={`flex items-center justify-center w-full gap-2 px-4 py-4 font-semibold transition-transform ${
+                room?.playerCount < 2 ? 'cursor-not-allowed' : 'hover:-translate-y-0.5'
+              }`}
+              style={
+                room?.playerCount < 2
+                  ? { backgroundColor: COLORS.border, color: COLORS.gray }
+                  : { backgroundColor: COLORS.ink, color: COLORS.paper, boxShadow: SHADOW_SM }
+              }
+            >
+              {room?.playerCount < 2 ? 'Waiting for another player…' : 'Ready to play'}
+              {!(room?.playerCount < 2) && <ArrowRight className="w-5 h-5" />}
             </button>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <h3 className="flex items-center gap-2 mb-3 font-semibold text-black">
-                <Users className="w-5 h-5" />
-                Players ({room?.playerCount || 0}/2)
-              </h3>
-              <div className="space-y-2">
-                {room && Object.entries(room.players || {}).map(([id, player]) => (
-                  <div key={id} className="flex items-center justify-between p-3 bg-white rounded-lg">
-                    <span className="font-medium text-gray-900">{player.name}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${player.ready ?
-                      'bg-gray-800 text-white' :
-                      'bg-gray-200 text-gray-700'}`}>
-                      {player.ready ? 'Ready' : 'Waiting'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-4 bg-gray-100 rounded-xl">
-              <h3 className="flex items-center gap-2 mb-3 font-semibold text-black">
-                <Vote className="w-5 h-5" />
-                Voters ({room?.voterCount || 0})
-              </h3>
-              <div className="space-y-2">
-                {room && Object.entries(room.voters || {}).map(([id, voter]) => (
-                  <div key={id} className="flex items-center p-3 bg-white rounded-lg">
-                    <span className="font-medium text-gray-900">{voter.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        )}
+        {userRole === 'voter' && (
+          <div className="p-5 mt-6 text-center bg-white border" style={{ borderColor: COLORS.border, boxShadow: SHADOW_SM }}>
+            <p style={{ color: COLORS.ink }}>You're ready to vote! Wait for the game to start.</p>
           </div>
-          {userRole === 'player' && !isReady && (
-            <div className="mt-6">
-              <button
-                onClick={markReady}
-                disabled={room?.playerCount < 2}
-                className={`w-full bg-gray-900 hover:bg-black disabled:bg-gray-300 text-white font-semibold py-3 px-4 rounded-lg transition duration-200`}
-              >
-                {room?.playerCount < 2 ? 'Waiting for another player...' : 'Ready to Play!'}
-              </button>
-            </div>
-          )}
-          {userRole === 'voter' && (
-            <div className="p-4 mt-6 bg-gray-100 rounded-xl">
-              <p className="text-center text-black">
-                You're ready to vote! Wait for the game to start.
-              </p>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 
   // this also contains the canvas needed for this game
   // Layout: a video-call style "main + picture-in-picture" view.
-  // Whichever canvas is NOT active (self by default) sits full-size as the
-  // main stage; the other floats as a small clickable corner tile. Clicking
-  // the tile swaps which one is main/pip, exactly like tapping a video-call
-  // participant to bring them to the front.
+  
   const renderGameScreen = () => {
     const pipTileClasses =
-      "absolute bottom-3 right-3 md:bottom-4 md:right-4 z-20 overflow-hidden rounded-lg border-2 border-white shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-105 group";
-    const pipTileStyle = { width: '30%', maxWidth: '170px', aspectRatio: '4 / 3' };
+      "absolute bottom-3 right-3 md:bottom-4 md:right-4 z-20 overflow-hidden border-2 shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-105 group";
+    const pipTileStyle = { width: '30%', maxWidth: '170px', aspectRatio: '4 / 3', borderColor: COLORS.paper };
 
     return (
-      <div className="min-h-screen p-4 bg-gray-100">
+      <div className="min-h-screen px-4 py-8 md:px-10" style={{ backgroundColor: COLORS.paper, fontFamily: FONT_BODY }}>
         <div className="mx-auto max-w-5xl">
-          <div className="p-4 mb-4 bg-white shadow-lg rounded-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-black">Draw: {currentPrompt}</h2>
-                <p className="text-gray-600">Show your artistic skills!</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-black">
-                  <Clock className="w-5 h-5" />
-                  <span className="text-lg font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
-                </div>
-              </div>
+          <BrandMark />
+          <div
+            className="flex items-center justify-between p-4 mb-4 border-2"
+            style={{ borderColor: COLORS.ink, backgroundColor: '#fff', boxShadow: SHADOW }}
+          >
+            <div>
+              <p className="text-xs tracking-widest uppercase" style={{ color: COLORS.gray }}>Draw this</p>
+              <h2 className="text-2xl" style={{ fontFamily: FONT_DISPLAY, color: COLORS.ink }}>
+                {currentPrompt}
+              </h2>
+            </div>
+            <div
+              className="flex items-center gap-2 px-3 py-2"
+              style={{ backgroundColor: COLORS.ink, color: COLORS.paper, fontFamily: FONT_MONO }}
+            >
+              <Clock className="w-4 h-4" />
+              <span className="text-lg font-semibold">
+                {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+              </span>
             </div>
           </div>
+
           {userRole === 'player' ? (
-            <div className="p-4 bg-white shadow-lg rounded-xl">
+            <div className="p-4 bg-white border-2" style={{ borderColor: COLORS.ink, boxShadow: SHADOW }}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-black">
-                  {pipExpanded ? "Opponent's Drawing" : 'Your Drawing'}
+                <h3 className="font-semibold" style={{ color: COLORS.ink }}>
+                  {pipExpanded ? "Opponent's drawing" : 'Your drawing'}
                 </h3>
                 {!pipExpanded && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <input
                       type="color"
                       value={currentColor}
                       onChange={(e) => setCurrentColor(e.target.value)}
-                      className="w-8 h-8 border-0 rounded"
+                      className="w-8 h-8 border-0 cursor-pointer"
+                      style={{ backgroundColor: 'transparent' }}
                     />
                     <input
                       type="range"
@@ -447,7 +591,8 @@ const DrawingGame = () => {
                     />
                     <button
                       onClick={clearCanvas}
-                      className="px-3 py-1 text-sm text-white bg-gray-600 rounded hover:bg-black"
+                      className="px-3 py-1 text-sm font-semibold transition-colors"
+                      style={{ color: COLORS.coral }}
                     >
                       Clear
                     </button>
@@ -456,8 +601,8 @@ const DrawingGame = () => {
               </div>
 
               <div
-                className="relative w-full overflow-hidden bg-gray-100 border-2 border-gray-300 rounded-lg"
-                style={{ aspectRatio: '4 / 3' }}
+                className="relative w-full overflow-hidden border-2"
+                style={{ aspectRatio: '4 / 3', borderColor: COLORS.ink, backgroundColor: COLORS.paperDim }}
               >
                 {/* Your canvas: main stage by default, shrinks to the pip
                     corner once the opponent's view is expanded. */}
@@ -477,7 +622,10 @@ const DrawingGame = () => {
                     className={`w-full h-full bg-white ${pipExpanded ? '' : 'cursor-crosshair'}`}
                     style={{ touchAction: 'none' }}
                   />
-                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 text-[10px] font-semibold text-white rounded bg-black/60">
+                  <span
+                    className="absolute px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bottom-1 left-1"
+                    style={{ backgroundColor: COLORS.ink, color: COLORS.paper, fontFamily: FONT_MONO }}
+                  >
                     You
                   </span>
                   {pipExpanded && (
@@ -500,7 +648,10 @@ const DrawingGame = () => {
                     height={300}
                     className="w-full h-full bg-white"
                   />
-                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 text-[10px] font-semibold text-white rounded bg-black/60">
+                  <span
+                    className="absolute px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bottom-1 left-1"
+                    style={{ backgroundColor: COLORS.coral, color: COLORS.ink, fontFamily: FONT_MONO }}
+                  >
                     Opponent
                   </span>
                   {!pipExpanded && (
@@ -510,15 +661,17 @@ const DrawingGame = () => {
                   )}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-center text-gray-500">
+              <p className="mt-2 text-xs text-center" style={{ color: COLORS.gray }}>
                 Tap the small preview to swap views — just like flipping the focus in a video call.
               </p>
             </div>
           ) : (
-            <div className="p-8 text-center bg-white shadow-lg rounded-xl">
-              <Palette className="w-16 h-16 mx-auto mb-4 text-black" />
-              <h3 className="mb-2 text-xl font-semibold text-black">Players are drawing...</h3>
-              <p className="text-gray-600">Get ready to vote for the best drawing!</p>
+            <div className="p-8 text-center bg-white border-2" style={{ borderColor: COLORS.ink, boxShadow: SHADOW }}>
+              <Palette className="w-16 h-16 mx-auto mb-4" style={{ color: COLORS.coral }} />
+              <h3 className="mb-2 text-xl" style={{ fontFamily: FONT_DISPLAY, color: COLORS.ink }}>
+                Players are drawing…
+              </h3>
+              <p style={{ color: COLORS.gray }}>Get ready to vote for the best drawing!</p>
             </div>
           )}
         </div>
@@ -528,26 +681,32 @@ const DrawingGame = () => {
 
   // VOTING
   const renderVotingScreen = () => (
-    <div className="min-h-screen p-4 bg-gray-100">
-      <div className="max-w-6xl mx-auto">
-        <div className="p-6 mb-6 bg-white shadow-2xl rounded-2xl">
-          <div className="mb-6 text-center">
-            <h2 className="mb-2 text-3xl font-bold text-black">Time to Vote!</h2>
-            <p className="mb-4 text-gray-600">Prompt was: "{currentPrompt}"</p>
-            <div className="flex items-center justify-center gap-2 text-black">
-              <Clock className="w-5 h-5" />
-              <span className="text-xl font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+    <div className="min-h-screen px-4 py-10 md:px-10" style={{ backgroundColor: COLORS.paper, fontFamily: FONT_BODY }}>
+      <div className="mx-auto max-w-6xl">
+        <BrandMark />
+        <div className="p-6 mb-6 border-2" style={{ borderColor: COLORS.ink, backgroundColor: '#fff', boxShadow: SHADOW }}>
+          <div className="mb-2 text-center">
+            <h2 className="text-4xl" style={{ fontFamily: FONT_DISPLAY, color: COLORS.ink }}>Time to vote!</h2>
+            <p className="mt-3 mb-4" style={{ color: COLORS.gray }}>Prompt was: "{currentPrompt}"</p>
+            <div
+              className="inline-flex items-center gap-2 px-3 py-2"
+              style={{ backgroundColor: COLORS.ink, color: COLORS.paper, fontFamily: FONT_MONO }}
+            >
+              <Clock className="w-4 h-4" />
+              <span className="text-lg font-semibold">
+                {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+              </span>
             </div>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 mt-6 md:grid-cols-2">
             {playerDrawings.map((player) => (
-              <div key={player.playerId} className="p-6 bg-gray-50 rounded-xl">
-                <h3 className="mb-4 font-semibold text-center text-black">{player.playerName}</h3>
-                <div className="p-4 mb-4 bg-white rounded-lg">
+              <div key={player.playerId} className="p-6 border" style={{ borderColor: COLORS.border, backgroundColor: COLORS.paperDim, boxShadow: SHADOW_SM }}>
+                <h3 className="mb-4 font-semibold text-center" style={{ color: COLORS.ink }}>{player.playerName}</h3>
+                <div className="p-3 mb-4 bg-white border-2" style={{ borderColor: COLORS.ink }}>
                   <canvas
                     width={400}
                     height={300}
-                    className="w-full border border-gray-300 rounded"
+                    className="w-full"
                     ref={(canvas) => {
                       if (canvas && player.drawing) {
                         const ctx = canvas.getContext('2d');
@@ -575,13 +734,14 @@ const DrawingGame = () => {
                 {userRole === 'voter' && !hasVoted && (
                   <button
                     onClick={() => castVote(player.playerId)}
-                    className="w-full px-4 py-3 font-semibold text-white transition duration-200 bg-black rounded-lg hover:bg-gray-800"
+                    className="flex items-center justify-center w-full gap-2 px-4 py-3 font-semibold transition-transform hover:-translate-y-0.5"
+                    style={{ backgroundColor: COLORS.ink, color: COLORS.paper, boxShadow: SHADOW_SM }}
                   >
                     Vote for {player.playerName}
                   </button>
                 )}
                 {hasVoted && (
-                  <div className="font-semibold text-center text-gray-700">
+                  <div className="py-3 font-semibold text-center" style={{ color: COLORS.coral }}>
                     Vote cast! ✓
                   </div>
                 )}
@@ -589,10 +749,8 @@ const DrawingGame = () => {
             ))}
           </div>
           {userRole === 'player' && (
-            <div className="p-4 mt-6 text-center bg-gray-100 rounded-xl">
-              <p className="text-black">
-                Voters are deciding the winner. Good luck! 
-              </p>
+            <div className="p-4 mt-6 text-center border" style={{ borderColor: COLORS.border, backgroundColor: COLORS.paperDim }}>
+              <p style={{ color: COLORS.ink }}>Voters are deciding the winner. Good luck!</p>
             </div>
           )}
         </div>
@@ -602,36 +760,50 @@ const DrawingGame = () => {
 
   // RESULTS
   const renderResultsScreen = () => (
-    <div className="min-h-screen p-4 bg-gray-100">
-      <div className="max-w-4xl mx-auto">
-        <div className="p-8 bg-white shadow-2xl rounded-2xl">
+    <div className="min-h-screen px-4 py-10 md:px-10" style={{ backgroundColor: COLORS.paper, fontFamily: FONT_BODY }}>
+      <div className="mx-auto max-w-4xl">
+        <BrandMark />
+        <div className="p-8 border-2" style={{ borderColor: COLORS.ink, backgroundColor: '#fff', boxShadow: SHADOW }}>
           <div className="mb-8 text-center">
-            <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-700" />
-            <h2 className="mb-2 text-3xl font-bold text-black">Game Results</h2>
-            <p className="text-gray-600">Prompt: "{gameResults?.prompt}"</p>
+            <Trophy className="w-14 h-14 mx-auto mb-3" style={{ color: COLORS.coral }} />
+            <h2 className="text-4xl" style={{ fontFamily: FONT_DISPLAY, color: COLORS.ink }}>Game results</h2>
+            <p className="mt-2" style={{ color: COLORS.gray }}>Prompt: "{gameResults?.prompt}"</p>
           </div>
           {gameResults && (
             <div className="space-y-6">
               {gameResults.results.map((result, index) => (
-                <div key={result.playerId} className={`rounded-xl p-6 ${index === 0 ?
-                  'bg-gray-200 border-2 border-gray-600' : 'bg-gray-50'
-                }`}>
+                <div
+                  key={result.playerId}
+                  className="p-6 border-2"
+                  style={
+                    index === 0
+                      ? { borderColor: COLORS.coral, backgroundColor: '#FFF4EF', boxShadow: SHADOW_SM }
+                      : { borderColor: COLORS.border, backgroundColor: COLORS.paperDim }
+                  }
+                >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      {index === 0 && <Trophy className="w-6 h-6 text-gray-900" />}
-                      <h3 className="text-xl font-semibold text-black">{result.playerName}</h3>
-                      {index === 0 && <span className="px-3 py-1 text-sm font-semibold text-black bg-gray-100 rounded-full">Winner!</span>}
+                      {index === 0 && <Trophy className="w-6 h-6" style={{ color: COLORS.coral }} />}
+                      <h3 className="text-xl font-semibold" style={{ color: COLORS.ink }}>{result.playerName}</h3>
+                      {index === 0 && (
+                        <span
+                          className="px-3 py-1 text-xs font-semibold tracking-wide uppercase"
+                          style={{ backgroundColor: COLORS.coral, color: COLORS.ink }}
+                        >
+                          Winner
+                        </span>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-black">{result.votes}</div>
-                      <div className="text-sm text-gray-600">votes</div>
+                    <div className="text-right" style={{ fontFamily: FONT_MONO }}>
+                      <div className="text-2xl font-semibold" style={{ color: COLORS.ink }}>{result.votes}</div>
+                      <div className="text-xs uppercase tracking-wide" style={{ color: COLORS.gray }}>votes</div>
                     </div>
                   </div>
-                  <div className="p-4 bg-white rounded-lg">
+                  <div className="p-3 bg-white border-2" style={{ borderColor: COLORS.ink }}>
                     <canvas
                       width={400}
                       height={300}
-                      className="w-full border border-gray-300 rounded"
+                      className="w-full"
                       ref={(canvas) => {
                         if (canvas && result.drawing) {
                           const ctx = canvas.getContext('2d');
@@ -663,9 +835,11 @@ const DrawingGame = () => {
           <div className="mt-8 text-center">
             <button
               onClick={startNewGame}
-              className="px-6 py-3 font-semibold text-white transition duration-200 bg-black rounded-lg hover:bg-gray-800"
+              className="inline-flex items-center gap-2 px-6 py-3 font-semibold transition-transform hover:-translate-y-0.5"
+              style={{ backgroundColor: COLORS.ink, color: COLORS.paper, boxShadow: SHADOW }}
             >
-              Play Again
+              Play again
+              <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -675,7 +849,8 @@ const DrawingGame = () => {
 
  
   return (
-    <div className="font-sans">
+    <div className="font-sans" style={{ backgroundColor: COLORS.paper }}>
+      <style>{FONT_IMPORT_URL}</style>
       {currentScreen === 'home' && renderHomeScreen()}
       {currentScreen === 'lobby' && renderLobbyScreen()}
       {currentScreen === 'game' && renderGameScreen()}
