@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Users, Clock, Trophy, Palette, Vote, Share2, Play, UserPlus, Maximize2 } from 'lucide-react';
+import { Users, Clock, Trophy, Palette, Vote, Share2, Play, Maximize2 } from 'lucide-react';
 
 const SOCKET_URL = 'https://sribble-backend-1.onrender.com';
 
@@ -96,7 +96,7 @@ const DrawingGame = () => {
     return () => {
       newSocket.close();
     };
-  }, []);
+  }, );
 
   useEffect(() => {
     if (timeLeft > 0 && (gameState === 'drawing' || gameState === 'voting')) {
