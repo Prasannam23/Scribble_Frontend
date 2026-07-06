@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Users, Clock, Trophy, Palette, Vote, Share2, Play, UserPlus } from 'lucide-react';
+import { Users, Clock, Trophy, Palette, Vote, Share2, Play, UserPlus, Maximize2 } from 'lucide-react';
 
-const SOCKET_URL = 'https://sribble-backend.onrender.com';
+const SOCKET_URL = 'https://sribble-backend-1.onrender.com';
 
 const DrawingGame = () => {
-  // Socket connection
+
   const [socket, setSocket] = useState(null);
 
   
@@ -23,7 +23,7 @@ const DrawingGame = () => {
   const [playerDrawings, setPlayerDrawings] = useState([]);
   const [hasVoted, setHasVoted] = useState(false);
 
-  // Drawing state
+  
   const canvasRef = useRef(null);
   const opponentCanvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -32,7 +32,10 @@ const DrawingGame = () => {
   const [drawingData, setDrawingData] = useState([]);
   const [opponentDrawingData, setOpponentDrawingData] = useState([]);
 
-  // Socket setup
+
+  const [pipExpanded, setPipExpanded] = useState(false);
+
+  
   useEffect(() => {
     const newSocket = io(SOCKET_URL);
     setSocket(newSocket);
@@ -61,6 +64,7 @@ const DrawingGame = () => {
       setTimeLeft(data.timeLimit / 1000);
       setDrawingData([]);
       setOpponentDrawingData([]);
+      setPipExpanded(false);
     });
 
     newSocket.on('opponent_drawing', (data) => {
@@ -246,6 +250,7 @@ const DrawingGame = () => {
     setGameResults(null);
     setCurrentPrompt('');
     setTimeLeft(0);
+    setPipExpanded(false);
   };
 
 // this is the ui part 
@@ -388,86 +393,134 @@ const DrawingGame = () => {
     </div>
   );
 
- // this also contains the canvas needed for this game 
-  const renderGameScreen = () => (
-    <div className="min-h-screen p-4 bg-gray-100">
-      <div className="mx-auto max-w-7xl">
-        <div className="p-4 mb-4 bg-white shadow-lg rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-black">Draw: {currentPrompt}</h2>
-              <p className="text-gray-600">Show your artistic skills!</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-black">
-                <Clock className="w-5 h-5" />
-                <span className="text-lg font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+  // this also contains the canvas needed for this game
+  // Layout: a video-call style "main + picture-in-picture" view.
+  // Whichever canvas is NOT active (self by default) sits full-size as the
+  
+  const renderGameScreen = () => {
+    const pipTileClasses =
+      "absolute bottom-3 right-3 md:bottom-4 md:right-4 z-20 overflow-hidden rounded-lg border-2 border-white shadow-2xl cursor-pointer transition-transform duration-200 hover:scale-105 group";
+    const pipTileStyle = { width: '30%', maxWidth: '170px', aspectRatio: '4 / 3' };
+
+    return (
+      <div className="min-h-screen p-4 bg-gray-100">
+        <div className="mx-auto max-w-5xl">
+          <div className="p-4 mb-4 bg-white shadow-lg rounded-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-black">Draw: {currentPrompt}</h2>
+                <p className="text-gray-600">Show your artistic skills!</p>
               </div>
-            </div>
-          </div>
-        </div>
-        {userRole === 'player' ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            
-            <div className="p-4 bg-white shadow-lg rounded-xl">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-black">Your Drawing</h3>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={currentColor}
-                    onChange={(e) => setCurrentColor(e.target.value)}
-                    className="w-8 h-8 border-0 rounded"
-                  />
-                  <input
-                    type="range"
-                    min="1"
-                    max="20"
-                    value={brushSize}
-                    onChange={(e) => setBrushSize(Number(e.target.value))}
-                    className="w-20"
-                  />
-                  <button
-                    onClick={clearCanvas}
-                    className="px-3 py-1 text-sm text-white bg-gray-600 rounded hover:bg-black"
-                  >
-                    Clear
-                  </button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-black">
+                  <Clock className="w-5 h-5" />
+                  <span className="text-lg font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
                 </div>
               </div>
-              <canvas
-                ref={canvasRef}
-                width={400}
-                height={300}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair"
-                style={{ touchAction: 'none' }}
-              />
             </div>
-            {/* Opponent Canvas */}
+          </div>
+          {userRole === 'player' ? (
             <div className="p-4 bg-white shadow-lg rounded-xl">
-              <h3 className="mb-4 font-semibold text-black">Opponent's Drawing</h3>
-              <canvas
-                ref={opponentCanvasRef}
-                width={400}
-                height={300}
-                className="w-full border-2 border-gray-300 rounded-lg"
-              />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-black">
+                  {pipExpanded ? "Opponent's Drawing" : 'Your Drawing'}
+                </h3>
+                {!pipExpanded && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={currentColor}
+                      onChange={(e) => setCurrentColor(e.target.value)}
+                      className="w-8 h-8 border-0 rounded"
+                    />
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={brushSize}
+                      onChange={(e) => setBrushSize(Number(e.target.value))}
+                      className="w-20"
+                    />
+                    <button
+                      onClick={clearCanvas}
+                      className="px-3 py-1 text-sm text-white bg-gray-600 rounded hover:bg-black"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="relative w-full overflow-hidden bg-gray-100 border-2 border-gray-300 rounded-lg"
+                style={{ aspectRatio: '4 / 3' }}
+              >
+                {/* Your canvas: main stage by default, shrinks to the pip
+                    corner once the opponent's view is expanded. */}
+                <div
+                  className={pipExpanded ? pipTileClasses : 'absolute inset-0'}
+                  style={pipExpanded ? pipTileStyle : undefined}
+                  onClick={pipExpanded ? () => setPipExpanded(false) : undefined}
+                >
+                  <canvas
+                    ref={canvasRef}
+                    width={400}
+                    height={300}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    className={`w-full h-full bg-white ${pipExpanded ? '' : 'cursor-crosshair'}`}
+                    style={{ touchAction: 'none' }}
+                  />
+                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 text-[10px] font-semibold text-white rounded bg-black/60">
+                    You
+                  </span>
+                  {pipExpanded && (
+                    <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/30 group-hover:opacity-100">
+                      <Maximize2 className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Opponent canvas: pip corner by default, becomes the main
+                    stage when clicked/expanded. */}
+                <div
+                  className={pipExpanded ? 'absolute inset-0' : pipTileClasses}
+                  style={pipExpanded ? undefined : pipTileStyle}
+                  onClick={pipExpanded ? undefined : () => setPipExpanded(true)}
+                >
+                  <canvas
+                    ref={opponentCanvasRef}
+                    width={400}
+                    height={300}
+                    className="w-full h-full bg-white"
+                  />
+                  <span className="absolute bottom-1 left-1 px-1.5 py-0.5 text-[10px] font-semibold text-white rounded bg-black/60">
+                    Opponent
+                  </span>
+                  {!pipExpanded && (
+                    <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/30 group-hover:opacity-100">
+                      <Maximize2 className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-center text-gray-500">
+                Tap the small preview to swap views — just like flipping the focus in a video call.
+              </p>
             </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center bg-white shadow-lg rounded-xl">
-            <Palette className="w-16 h-16 mx-auto mb-4 text-black" />
-            <h3 className="mb-2 text-xl font-semibold text-black">Players are drawing...</h3>
-            <p className="text-gray-600">Get ready to vote for the best drawing!</p>
-          </div>
-        )}
+          ) : (
+            <div className="p-8 text-center bg-white shadow-lg rounded-xl">
+              <Palette className="w-16 h-16 mx-auto mb-4 text-black" />
+              <h3 className="mb-2 text-xl font-semibold text-black">Players are drawing...</h3>
+              <p className="text-gray-600">Get ready to vote for the best drawing!</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // VOTING
   const renderVotingScreen = () => (
