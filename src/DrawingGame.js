@@ -4,8 +4,7 @@ import { Users, Clock, Trophy, Palette, Vote, Share2, PenTool, ArrowRight, Maxim
 
 const SOCKET_URL = 'https://sribble-backend-1.onrender.com';
 
-// Signature visual: a torn-sketchpad-edge divider between the brand panel
-// and the form panel on the home screen, built as a zigzag clip-path.
+
 const zigzagClipPath = (teeth = 16, amplitude = 4) => {
   const points = ['0% 0%'];
   for (let i = 0; i <= teeth; i++) {
@@ -18,7 +17,7 @@ const zigzagClipPath = (teeth = 16, amplitude = 4) => {
 };
 const HOME_PANEL_CLIP = zigzagClipPath(18, 4.5);
 
-// Shared design tokens — paper/ink/marker palette used across every screen.
+
 const COLORS = {
   paper: '#FAF7F0',
   paperDim: '#F1ECE1',
@@ -48,8 +47,19 @@ const BrandMark = () => (
   </div>
 );
 
+
+const getCanvasPoint = (canvas, e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY,
+  };
+};
+
 const DrawingGame = () => {
-  // Socket connection
+  
   const [socket, setSocket] = useState(null);
 
   
@@ -67,7 +77,7 @@ const DrawingGame = () => {
   const [playerDrawings, setPlayerDrawings] = useState([]);
   const [hasVoted, setHasVoted] = useState(false);
 
-  // Drawing state
+  
   const canvasRef = useRef(null);
   const opponentCanvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -76,7 +86,7 @@ const DrawingGame = () => {
   const [drawingData, setDrawingData] = useState([]);
   const [, setOpponentDrawingData] = useState([]);
 
-  // Picture-in-picture layout state: when true, the opponent's canvas is the
+
  
   const [pipExpanded, setPipExpanded] = useState(false);
 
@@ -176,9 +186,7 @@ const DrawingGame = () => {
     if (gameState !== 'drawing' || userRole !== 'player') return;
     setIsDrawing(true);
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasPoint(canvas, e);
     const ctx = canvas.getContext('2d');
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -187,9 +195,7 @@ const DrawingGame = () => {
   const draw = useCallback((e) => {
     if (!isDrawing || gameState !== 'drawing' || userRole !== 'player') return;
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasPoint(canvas, e);
     const ctx = canvas.getContext('2d');
     ctx.lineTo(x, y);
     ctx.strokeStyle = currentColor;
@@ -298,12 +304,12 @@ const DrawingGame = () => {
     setPipExpanded(false);
   };
 
-// this is the ui part 
+
  
   const renderHomeScreen = () => (
     <div className="flex flex-col min-h-screen md:flex-row" style={{ backgroundColor: COLORS.paper }}>
 
-      {/* Brand panel — desktop only; torn-sketchpad edge via clip-path */}
+      
       <div
         className="relative hidden overflow-hidden md:flex md:w-[42%] flex-col justify-between px-10 py-12"
         style={{ backgroundColor: '#1A1A1A', clipPath: HOME_PANEL_CLIP }}
@@ -534,7 +540,7 @@ const DrawingGame = () => {
   );
 
   // this also contains the canvas needed for this game
-  // Layout: a video-call style "main + picture-in-picture" view.
+
   
   const renderGameScreen = () => {
     const pipTileClasses =
